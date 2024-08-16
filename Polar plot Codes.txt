@@ -1,0 +1,79 @@
+﻿from google.colab import files
+uploaded = files.upload()
+# Assuming tilt and theta are your radial and angular axes respectively
+tilt_unique = np.unique(tilt)
+theta_unique = np.unique(theta)
+
+# Create a meshgrid with appropriate shapes
+tilt_grid, theta_grid = np.meshgrid(tilt_unique, theta_unique)
+
+# Reshape irradiance to match the grid dimensions
+irradiance_grid = irradiance.reshape(theta_grid.shape)
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Ensure matplotlib works in Colab
+%matplotlib inline
+
+# Load data from the Excel file (use your filename if not using Colab upload)
+df = pd.read_excel('Book1.xlsx')
+
+# Extract columns
+azimuth = df['Azimuth'].values
+tilt = df['Tilt'].values
+irradiance = df['Irradiance'].values
+
+# Define custom colors for different tilt angles
+custom_colors = ['purple', 'violet', 'indigo', 'magenta', 'orchid']
+
+# Map tilt angles to colors
+tilt_angles = np.unique(tilt)
+color_dict = {angle: custom_colors[i % len(custom_colors)] for i, angle in enumerate(tilt_angles)}
+
+# Create polar plot
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, polar=True)
+
+# Define the number of azimuth points and the angular intervals
+num_azimuths = 12
+theta = np.linspace(0, 2 * np.pi, num_azimuths, endpoint=False).tolist()
+
+# Plot data for each tilt angle
+for t in tilt_angles:
+    mask = (tilt == t)
+    azimuth_values = azimuth[mask]
+    irradiance_values = irradiance[mask]
+
+    # Ensure azimuth_values are ordered and close the loop
+    sorted_indices = np.argsort(azimuth_values)
+    azimuth_values = azimuth_values[sorted_indices]
+    irradiance_values = irradiance_values[sorted_indices]
+
+    # Close the loop for plotting
+    azimuth_values = np.append(azimuth_values, azimuth_values[0])
+    irradiance_values = np.append(irradiance_values, irradiance_values[0])
+
+    theta_values = np.radians(azimuth_values)
+
+    # Plot points for irradiance values
+    color = color_dict[t]
+    ax.scatter(theta_values, irradiance_values, color=color, label=f'Tilt {t}°', alpha=0.7)
+
+    # Connect points with lines
+    ax.plot(theta_values, irradiance_values, color=color, alpha=0.5)
+
+# Customize the plot
+ax.set_xticks(np.radians(np.arange(0, 360, 30)))  # Divide the circle into 12 parts (30° intervals)
+ax.set_xticklabels(np.arange(0, 360, 30))  # Label ticks with azimuth angles
+
+ax.set_yticks([0, 5, 10, 15, 20])  # Radial axis values
+ax.set_yticklabels(['0', '5', '10', '15', '20'])  # Radial axis labels
+
+ax.yaxis.grid(True, linestyle='--', linewidth=0.5)  # Radial grid lines
+
+plt.title('Polar Plot of Irradiance vs. Azimuth and Tilt Angle', va='bottom')
+plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1))
+plt.show()
